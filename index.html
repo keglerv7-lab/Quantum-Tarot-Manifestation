@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Quantum Tarot Manifestation</title>
+<style>
+:root { --bg:#0b1020; --panel:#111936; --ink:#f5f7ff; --muted:#b8c0de; --accent:#ffd96a; --border:#223058; }
+*{box-sizing:border-box} html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border)}
+h1{font-size:1.15rem;margin:0;color:var(--accent)}
+.wrap{max-width:980px;margin:0 auto;padding:14px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+button,input,.link{width:100%;max-width:260px;padding:10px;border-radius:12px;border:1px solid #263763;background:#0f1630;color:var(--ink);font-size:1rem;text-align:center;text-decoration:none}
+button{cursor:pointer} button.primary{background:#1a2e6f;border-color:#4a78ff}
+button:disabled{opacity:.7;cursor:not-allowed}
+.muted{color:var(--muted);font-size:.9rem}
+.card{background:linear-gradient(180deg,#131c3a,#0f1730);border:1px solid var(--border);border-radius:16px;padding:14px;margin:12px 0}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+.tile{background:#0d1530;border:1px solid #263763;border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:8px}
+.lbl{display:inline-block;background:#1b2a55;border:1px solid #355099;border-radius:10px;padding:4px 8px;color:#cfe0ff;font-size:.8rem;margin-bottom:2px;align-self:flex-start}
+img.cardimg{width:100%;aspect-ratio:300/527;object-fit:cover;border-radius:8px;border:1px solid #33497f;background:#0a0f24}
+.coach{white-space:pre-wrap;line-height:1.35;margin-top:10px;background:#0d1530;border:1px solid #263763;border-radius:12px;padding:10px}
+.history{list-style:none;padding:0;margin:0;display:grid;gap:8px}
+.history li{background:#0d1530;border:1px solid #263763;border-radius:10px;padding:8px}
+.small{font-size:.85rem}
+</style>
+</head>
+<body>
+<header>
+  <h1>✨ Quantum Tarot Manifestation</h1>
+  <div class="small">Streak: <span id="streak">0</span> · ⭐ <span id="stars">0</span></div>
+</header>
+
+<div class="wrap">
+  <section class="card">
+    <h2>Intention</h2>
+    <div class="row">
+      <input id="intent" placeholder="One clear sentence …" />
+      <button id="saveIntent" class="primary">Save</button>
+      <button id="focus">60-sec Focus</button>
+    </div>
+    <p class="muted">Breathe slowly; feel your intention as already true.</p>
+  </section>
+
+  <section class="card">
+    <h2>Draw</h2>
+    <div class="row">
+      <button id="draw1" class="primary">Draw 1</button>
+      <button id="draw3" class="primary">Draw 3 (Now • Bridge • Outcome)</button>
+      <button id="draw6">Draw 6</button>
+      <a class="link" href="#" id="importBtn">🖼️ Import real RWS images</a>
+    </div>
+    <div id="board" class="grid"></div>
+    <div id="coach" class="coach" aria-live="polite" hidden></div>
+  </section>
+
+  <section class="card">
+    <h2>Recent History</h2>
+    <ul id="history" class="history"></ul>
+    <div class="row">
+      <button id="export">Export JSON</button>
+      <button id="clearImages">Clear imported images</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Deck Library</h2>
+    <div id="library" class="grid"></div>
+  </section>
+</div>
+
+<!-- Importer Modal -->
+<div id="modal" class="card" style="position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:16px">
+  <div style="max-width:760px;width:100%;background:#0d1530;border:1px solid #263763;border-radius:16px;padding:16px">
+    <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:6px">
+      <h3 style="margin:0">Import 78 Rider–Waite–Smith Images</h3>
+      <button id="closeModal" style="width:auto">✖ Close</button>
+    </div>
+    <p class="muted">Drop <b>all 78</b> images here (JPG/PNG/WEBP). We match by filename words (e.g., “Fool”, “Queen_Swords”, “Pentacles_10”). Nothing uploads; images stay in your browser for offline use.</p>
+    <div id="drop" style="border:2px dashed #355099;border-radius:14px;padding:20px;text-align:center;background:#0f1730">Drop files here or click to choose<input id="picker" type="file" accept="image/*" multiple style="display:none"></div>
+    <ul id="matches" class="history" style="margin-top:10px"></ul>
+  </div>
+</div>
+
+<script>
+/* ===== One-file app with demo images + importer for real RWS ===== */
+const MAJ=[["MA_00","The Fool"],["MA_01","The Magician"],["MA_02","The High Priestess"],["MA_03","The Empress"],["MA_04","The Emperor"],["MA_05","The Hierophant"],["MA_06","The Lovers"],["MA_07","The Chariot"],["MA_08","Strength"],["MA_09","The Hermit"],["MA_10","Wheel of Fortune"],["MA_11","Justice"],["MA_12","The Hanged Man"],["MA_13","Death"],["MA_14","Temperance"],["MA_15","The Devil"],["MA_16","The Tower"],["MA_17","The Star"],["MA_18","The Moon"],["MA_19","The Sun"],["MA_20","Judgement"],["MA_21","The World"]];
+const RANKS=[["01","Ace"],["02","Two"],["03","Three"],["04","Four"],["05","Five"],["06","Six"],["07","Seven"],["08","Eight"],["09","Nine"],["10","Ten"],["11","Page"],["12","Knight"],["13","Queen"],["14","King"]];
+const SUITS=["Wands","Cups","Swords","Pentacles"]; // Pentacles included
+
+function baseDeck(){const a=MAJ.map(([code,name])=>({code,name}));for(const s of SUITS)for(const [nn,rank] of RANKS)a.push({code:`${s}_${nn}`,name:`${rank} of ${s}`});return a;}
+function demoSVG(title){const svg=encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='300' height='527'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0%' stop-color='#182a62'/><stop offset='100%' stop-color='#0a0f24'/></linearGradient></defs><rect width='100%' height='100%' rx='16' ry='16' fill='url(#g)' stroke='#5a7dff' stroke-width='3'/><circle cx='150' cy='260' r='52' fill='none' stroke='#8bc6ff' stroke-width='3'/><text x='150' y='44' fill='#ffd96a' font-size='22' font-family='Arial' text-anchor='middle'>${title}</text><text x='150' y='500' fill='#bfd0ff' font-size='13' font-family='Arial' text-anchor='middle'>Quantum Tarot (demo art)</text></svg>`);return `data:image/svg+xml;charset=utf-8,${svg}`;}
+function getOverrides(){try{return JSON.parse(localStorage.getItem('qt_overrides')||'{}')}catch{return{}}}
+function setOverrides(x){localStorage.setItem('qt_overrides',JSON.stringify(x))}
+function buildCards(){const ov=getOverrides();return baseDeck().map(c=>({...c,img:ov[c.code]||demoSVG(c.name)}))}
+let CARDS=buildCards();
+
+const $=s=>document.querySelector(s);const board=$('#board'),coach=$('#coach');
+let st=JSON.parse(localStorage.getItem('qt_state')||'{}');if(!st.streakDate){st.streakDate="";st.streak=0;st.stars=0;st.history=[];st.intent=""}
+updateHUD();renderHistory();renderLibrary();
+function save(){localStorage.setItem('qt_state',JSON.stringify(st));updateHUD()}
+function updateHUD(){$('#streak').textContent=st.streak||0;$('#stars').textContent=st.stars||0}
+function today(){return new Date().toISOString().slice(0,10)}
+function streakTick(){const t=today();if(st.streakDate!==t){const y=new Date();y.setDate(y.getDate()-1);st.streak=(st.streakDate===y.toISOString().slice(0,10))?(st.streak||0)+1:1;st.streakDate=t;save()}}
+
+$('#saveIntent').onclick=()=>{st.intent=$('#intent').value.trim();if(!st.intent)return alert('Write one short sentence.');streakTick();st.stars=(st.stars||0)+1;save();say(`Saved: “${st.intent}”. Now draw.`)}
+$('#focus').onclick=()=>{let n=60;const b=$('#focus');b.disabled=true;const t=setInterval(()=>{b.textContent=`Focusing… ${n}s`;n--;if(n<0){clearInterval(t);b.disabled=false;b.textContent='60-sec Focus';st.stars=(st.stars||0)+1;save()}},1000)}
+$('#draw1').onclick=()=>draw(1);$('#draw3').onclick=()=>draw(3);$('#draw6').onclick=()=>draw(6);
+function say(t){coach.hidden=false;coach.textContent=t}
+function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){const r=new Uint32Array(1);crypto.getRandomValues(r);const j=r[0]%(i+1);[a[i],a[j]]=[a[j],a[i]]}return a}
+function draw(n){board.innerHTML='';const picks=shuffle(CARDS).slice(0,n);picks.forEach((c,idx)=>{const d=document.createElement('div');d.className='tile';const lbl=document.createElement('div');lbl.className='lbl';lbl.textContent=(n===3?(['Now','Bridge','Outcome'][idx]||`Card ${idx+1}`):`Card ${idx+1}`);const img=document.createElement('img');img.className='cardimg';img.alt=c.name;img.src=c.img;const name=document.createElement('div');name.textContent=c.name;d.append(lbl,img,name);board.appendChild(d)});const it=st.intent||'your goal';if(n===3)say(`NOW → BRIDGE → OUTCOME\nFor ${it}, take ONE tiny “Bridge” step today.`);else say(`For ${it}: pick one small action today that matches the card’s energy.`);pushHistory({mode:`${n}-card`,cards:picks.map(x=>x.name)})}
+function pushHistory(rec){rec.intent=st.intent||'';rec.time=new Date().toLocaleString();st.history=[rec].concat(st.history||[]).slice(0,10);save();renderHistory()}
+function renderHistory(){const h=$('#history');h.innerHTML='';(st.history||[]).forEach(r=>{const li=document.createElement('li');li.textContent=`[${r.time}] ${r.mode}: ${r.cards.join(' | ')} ${r.intent?`— “${r.intent}”`:""}`;h.appendChild(li)})}
+function renderLibrary(){const lib=$('#library');lib.innerHTML='';CARDS.forEach(c=>{const d=document.createElement('div');d.className='tile';const img=document.createElement('img');img.className='cardimg';img.alt=c.name;img.src=c.img;const name=document.createElement('div');name.textContent=c.name;d.append(img,name);lib.appendChild(d)})}
+$('#export').onclick=()=>{const blob=new Blob([JSON.stringify(st.history||[],null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='qt_readings.json';a.click();URL.revokeObjectURL(url)}
+
+/* Importer (load real RWS images → localStorage) */
+const modal=document.getElementById('modal');document.getElementById('importBtn').onclick=e=>{e.preventDefault();modal.style.display='flex'};document.getElementById('closeModal').onclick=()=>modal.style.display='none';
+const drop=document.getElementById('drop'),picker=document.getElementById('picker'),matches=document.getElementById('matches');
+drop.addEventListener('click',()=>picker.click());drop.addEventListener('dragover',e=>{e.preventDefault();drop.style.opacity='0.85'});drop.addEventListener('dragleave',e=>{drop.style.opacity='1'});drop.addEventListener('drop',async e=>{e.preventDefault();drop.style.opacity='1';await handleFiles(e.dataTransfer.files)});picker.addEventListener('change',async e=>{await handleFiles(e.target.files)});
+function EXPECTED(){const arr=[];for(const[code,name]of MAJ)arr.push({code,name});for(const s of SUITS)for(const[nn,rank]of RANKS)arr.push({code:`${s}_${nn}`,name:`${rank} of ${s}`});return arr.map(x=>({...x,slug:x.name.toLowerCase().replace(/[^a-z0-9]+/g,'')}))}
+function bestMatch(filename){const base=filename.toLowerCase();let best=null,score=0;for(const item of EXPECTED()){let s=0;if(base.includes(item.slug))s+=item.slug.length;for(const t of item.name.toLowerCase().split(/[^a-z0-9]+/g).filter(Boolean)){if(base.includes(t))s+=t.length}if(s>score){score=s;best=item}}return best}
+function fileToDataURL(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(file)})}
+async function handleFiles(files){const overrides=getOverrides();let matched=0;for(const f of files){if(!f.type.startsWith('image/'))continue;const match=bestMatch(f.name);if(!match)continue;const dataUrl=await fileToDataURL(f);overrides[match.code]=dataUrl;matched++;const li=document.createElement('li');li.textContent=`${match.name} ← ${f.name}`;matches.prepend(li)}setOverrides(overrides);CARDS=buildCards();renderLibrary();const li=document.createElement('li');li.textContent=`✅ Imported ${matched} images.`;matches.prepend(li)}
+document.getElementById('clearImages').onclick=()=>{localStorage.removeItem('qt_overrides');CARDS=buildCards();renderLibrary();alert('Cleared imported images. Back to demo art.')}
+</script>
+</body>
+</html>
